@@ -47,6 +47,7 @@ use AnyEvent ();
 use AnyEvent::Util ();
 use AnyEvent::Socket ();
 use AnyEvent::Handle ();
+use Scalar::Util qw( blessed );
 
 use base Exporter::;
 
@@ -226,6 +227,20 @@ sub _get_slot($$) {
 sub http_request($$@) {
    my $cb = pop;
    my ($method, $url, %arg) = @_;
+   
+   # First parameter can be HTTP::Request
+   if (blessed($method)) {
+     my $req = $method;
+     $method = $req->method;
+     $url    = $req->url;
+     $arg{body} = $req->content;
+     
+     # Build headers
+     my $headers = $arg{headers} = {};
+     foreach my $name ($req->headers->header_field_names) {
+       $headers->{$name} = $req->header($name);
+     }
+   }
 
    my %hdr;
 
