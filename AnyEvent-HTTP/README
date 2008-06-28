@@ -1,0 +1,180 @@
+NAME
+    AnyEvent::HTTP - simple but non-blocking HTTP/HTTPS client
+
+SYNOPSIS
+       use AnyEvent::HTTP;
+
+       http_get "http://www.nethype.de/", sub { print $_[1] };
+
+       # ... do something else here
+
+DESCRIPTION
+    This module is an AnyEvent user, you need to make sure that you use and
+    run a supported event loop.
+
+    This module implements a simple, stateless and non-blocking HTTP client.
+    It supports GET, POST and other request methods, cookies and more, all
+    on a very low level. It can follow redirects supports proxies and
+    automatically limits the number of connections to the values specified
+    in the RFC.
+
+    It should generally be a "good client" that is enough for most HTTP
+    tasks. Simple tasks should be simple, but complex tasks should still be
+    possible as the user retains control over request and response headers.
+
+    The caller is responsible for authentication management, cookies (if the
+    simplistic implementation in this module doesn't suffice), referer and
+    other high-level protocol details for which this module offers only
+    limited support.
+
+  METHODS
+    http_get $url, key => value..., $cb->($data, $headers)
+        Executes an HTTP-GET request. See the http_request function for
+        details on additional parameters.
+
+    http_head $url, key => value..., $cb->($data, $headers)
+        Executes an HTTP-HEAD request. See the http_request function for
+        details on additional parameters.
+
+    http_post $url, $body, key => value..., $cb->($data, $headers)
+        Executes an HTTP-POST request with a request body of $bod. See the
+        http_request function for details on additional parameters.
+
+    http_request $method => $url, key => value..., $cb->($data, $headers)
+        Executes a HTTP request of type $method (e.g. "GET", "POST"). The
+        URL must be an absolute http or https URL.
+
+        The callback will be called with the response data as first argument
+        (or "undef" if it wasn't available due to errors), and a hash-ref
+        with response headers as second argument.
+
+        All the headers in that hash are lowercased. In addition to the
+        response headers, the "pseudo-headers" "HTTPVersion", "Status" and
+        "Reason" contain the three parts of the HTTP Status-Line of the same
+        name. The pseudo-header "URL" contains the original URL (which can
+        differ from the requested URL when following redirects).
+
+        If the server sends a header multiple lines, then their contents
+        will be joined together with "\x00".
+
+        If an internal error occurs, such as not being able to resolve a
+        hostname, then $data will be "undef", "$headers->{Status}" will be
+        599 and the "Reason" pseudo-header will contain an error message.
+
+        A typical callback might look like this:
+
+           sub {
+              my ($body, $hdr) = @_;
+
+              if ($hdr->{Status} =~ /^2/) {
+                 ... everything should be ok
+              } else {
+                 print "error, $hdr->{Status} $hdr->{Reason}\n";
+              }
+           }
+
+        Additional parameters are key-value pairs, and are fully optional.
+        They include:
+
+        recurse => $count (default: $MAX_RECURSE)
+            Whether to recurse requests or not, e.g. on redirects,
+            authentication retries and so on, and how often to do so.
+
+        headers => hashref
+            The request headers to use. Currently, "http_request" may
+            provide its own "Host:", "Content-Length:", "Connection:" and
+            "Cookie:" headers and will provide defaults for "User-Agent:"
+            and "Referer:".
+
+        timeout => $seconds
+            The time-out to use for various stages - each connect attempt
+            will reset the timeout, as will read or write activity. Default
+            timeout is 5 minutes.
+
+        proxy => [$host, $port[, $scheme]] or undef
+            Use the given http proxy for all requests. If not specified,
+            then the default proxy (as specified by $ENV{http_proxy}) is
+            used.
+
+            $scheme must be either missing or "http" for HTTP, or "https"
+            for HTTPS.
+
+        body => $string
+            The request body, usually empty. Will be-sent as-is (future
+            versions of this module might offer more options).
+
+        cookie_jar => $hash_ref
+            Passing this parameter enables (simplified) cookie-processing,
+            loosely based on the original netscape specification.
+
+            The $hash_ref must be an (initially empty) hash reference which
+            will get updated automatically. It is possible to save the
+            cookie_jar to persistent storage with something like JSON or
+            Storable, but this is not recommended, as expire times are
+            currently being ignored.
+
+            Note that this cookie implementation is not of very high
+            quality, nor meant to be complete. If you want complete cookie
+            management you have to do that on your own. "cookie_jar" is
+            meant as a quick fix to get some cookie-using sites working.
+            Cookies are a privacy disaster, do not use them unless required
+            to.
+
+        Example: make a simple HTTP GET request for http://www.nethype.de/
+
+           http_request GET => "http://www.nethype.de/", sub {
+              my ($body, $hdr) = @_;
+              print "$body\n";
+           };
+
+        Example: make a HTTP HEAD request on https://www.google.com/, use a
+        timeout of 30 seconds.
+
+           http_request
+              GET     => "https://www.google.com",
+              timeout => 30,
+              sub {
+                 my ($body, $hdr) = @_;
+                 use Data::Dumper;
+                 print Dumper $hdr;
+              }
+           ;
+
+  GLOBAL FUNCTIONS AND VARIABLES
+    AnyEvent::HTTP::set_proxy "proxy-url"
+        Sets the default proxy server to use. The proxy-url must begin with
+        a string of the form "http://host:port" (optionally "https:...").
+
+    $AnyEvent::HTTP::MAX_RECURSE
+        The default value for the "recurse" request parameter (default: 10).
+
+    $AnyEvent::HTTP::USERAGENT
+        The default value for the "User-Agent" header (the default is
+        "Mozilla/5.0 (compatible; AnyEvent::HTTP/$VERSION;
+        +http://software.schmorp.de/pkg/AnyEvent)").
+
+    $AnyEvent::HTTP::MAX_PERSISTENT
+        The maximum number of persistent connections to keep open (default:
+        8).
+
+        Not implemented currently.
+
+    $AnyEvent::HTTP::PERSISTENT_TIMEOUT
+        The maximum time to cache a persistent connection, in seconds
+        (default: 2).
+
+        Not implemented currently.
+
+    $AnyEvent::HTTP::ACTIVE
+        The number of active connections. This is not the number of
+        currently running requests, but the number of currently open and
+        non-idle TCP connections. This number of can be useful for
+        load-leveling.
+
+SEE ALSO
+    AnyEvent.
+
+AUTHOR
+       Marc Lehmann <schmorp@schmorp.de>
+       http://home.schmorp.de/
+
