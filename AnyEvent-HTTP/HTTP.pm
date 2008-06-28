@@ -468,7 +468,8 @@ sub http_head($@) {
 }
 
 sub http_post($$@) {
-   unshift @_, "POST", "body";
+   my $uri = shift;
+   unshift @_, "POST", shift, "body";
    &http_request
 }
 
