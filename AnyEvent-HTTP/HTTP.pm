@@ -87,9 +87,15 @@ Executes an HTTP-POST request with a request body of C<$bod>. See the
 http_request function for details on additional parameters.
 
 =item http_request $method => $url, key => value..., $cb->($data, $headers)
+=item http_request $obj, key => value..., $cb->($data, $headers)
 
 Executes a HTTP request of type C<$method> (e.g. C<GET>, C<POST>). The URL
 must be an absolute http or https URL.
+
+Alternatively, you can provide an object that implements the same interface
+as L<HTTP::Request>. The object will be used to obtain the method and URL.
+If it contains a non-empty request body, this will be used as well. The
+headers will be merged.
 
 The callback will be called with the response data as first argument
 (or C<undef> if it wasn't available due to errors), and a hash-ref with
