@@ -87,6 +87,7 @@ Executes an HTTP-POST request with a request body of C<$bod>. See the
 http_request function for details on additional parameters.
 
 =item http_request $method => $url, key => value..., $cb->($data, $headers)
+
 =item http_request $obj, key => value..., $cb->($data, $headers)
 
 Executes a HTTP request of type C<$method> (e.g. C<GET>, C<POST>). The URL
