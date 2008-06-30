@@ -1,10 +1,18 @@
 use strict;
 use warnings;
-use Test::More 'no_plan';
+use Test::More;
 
 use AnyEvent::Impl::Perl;
 use AnyEvent::HTTP;
-use HTTP::Request::Common qw( GET POST );
+
+eval {
+  require HTTP::Request::Common;
+  HTTP::Request::Common->import(qw( GET POST ));
+};
+plan skip_all => 'This test depends on HTTP::Request::Common'
+  if $@;
+
+plan tests => 6;
 
 my $cv = AnyEvent->condvar;
 my $req = GET("http://nonexistant.invalid/");
