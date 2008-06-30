@@ -226,22 +226,28 @@ sub _get_slot($$) {
 
 sub http_request($$@) {
    my $cb = pop;
-   my ($method, $url, %arg) = @_;
+   my $method = shift;
+   my ($url, %arg);
    
    # First parameter can be HTTP::Request
    if (blessed($method)) {
      my $req = $method;
      $method = $req->method;
-     $url    = $req->url;
-     $arg{body} = $req->content;
+     $url    = $req->url->as_string;
+
+     %arg    = @_;
+     $arg{body} = $req->content if length($req->content || '');
      
-     # Build headers
-     my $headers = $arg{headers} = {};
+     # Override headers
+     my $headers = $arg{headers} ||= {};
      foreach my $name ($req->headers->header_field_names) {
-       $headers->{$name} = $req->header($name);
+       $headers->{lc($name)} = $req->header($name);
      }
    }
-
+   else {
+     ($url, %arg) = @_;
+   }
+   
    my %hdr;
 
    $method = uc $method;
